@@ -26,10 +26,21 @@ plus the minimal logging needed to debug LLM behavior from day one.
 - [ ] `memory.md` content is never logged (hash + flag only); default logs carry candidate `id`+`url`, not snippet bodies; `logs/` gitignored.
 - [ ] Integration gate: one real `cursor-agent` call feeds the ladder successfully (manual/CI-tagged, not in the default mock suite).
 
+## Implementation notes (carried from slice-03 handoff)
+
+- **New files (all greenfield):** `providers/ai/index.ts` (`createAiProvider()` by `AI_PROVIDER`), `providers/ai/cursor-cli.ts`, `providers/ai/ollama.ts`, `pipeline/json-ladder.ts`, `observability/log.ts`, plus ladder fixtures. `AiProvider` already lives in `@gooplex/shared`; `pipeline/prompts.ts` has `PROMPT_VERSION` + token caps but **no** prompt builders yet (those are slices 05/07).
+- **Ladder API shape:** `extractJson(string) -> unknown` then `validateWithSchema(zodSchema, unknown)`. Slice 04 tests it with a small fixture schema; rank-specific zod lands in slice 05 and **reuses** this ladder.
+- **Cursor stdout envelope:** run the ladder on the inner `.result` string, not raw stdout (see `contracts.md` AI invocation contract).
+- **`p-limit(1)`:** remove the `index.ts` stub (`const limit = pLimit(1); void limit;`) and own it in the AI provider layer so callers do `await limit(() => ai.complete(...))`. `LRUCache` stays stubbed until slice 10.
+- **`AI_TIMEOUT_MS`:** read the 45s timeout from env, don't hardcode (the hardcoded 15s *search* timeout is a separate, already-noted gap — don't conflate).
+- **`traceId`:** no generator exists; mint a UUID per `complete()` call, and accept an optional `traceId` in a logging-context object so the orchestrator can reuse it in later slices.
+- **Redaction helper:** build it now even though `memory.md` doesn't exist until slice 08, so slice 08 can't accidentally leak its content.
+- **Integration gate:** use `describe.runIf(cursorAgentAvailable)` (mirror `searxng.test.ts`); keep it out of the default mock suite.
+
 ## Done when
 
 `AiProvider.complete()` returns a string for both providers; ladder+zod unit tests pass; a real CLI call is logged with `ladderStep`/`zodOk`.
 
 ## Out of scope
 
-Reason/rank prompts (next slices); UI.
+Reason/rank prompts and prompt builders (slices 05/07); **wiring AI into `/api/search`, the orchestrator, or the UI** — do NOT touch them; prove `complete()` + ladder + logs in isolation. Rank-specific zod (slice 05); LRU cache (slice 10); steering files `rules.md`/`memory.md`/`searchInitialization.md` (slice 08).

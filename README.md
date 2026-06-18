@@ -16,6 +16,8 @@ If `pnpm install` fails with `ERR_PNPM_META_FETCH_FAIL` (registry timeout), re-r
 cp .env.example .env
 ```
 
+Then set `SEARXNG_SECRET` in `.env` to a fresh value (`openssl rand -hex 32`). Docker injects it into SearXNG at startup — you never edit `searxng/settings.yml` by hand.
+
 ## Development
 
 ```bash
@@ -35,13 +37,13 @@ Health check: `curl http://localhost:3001/health`
 
 ## SearXNG secret key
 
-`searxng/settings.yml` requires `server.secret_key`. Generate one for local use:
+The SearXNG instance secret comes from `SEARXNG_SECRET` in `.env` — **not** from `searxng/settings.yml` (which only carries the `ultrasecretkey` placeholder that `docker compose` substitutes at runtime). Generate one:
 
 ```bash
 openssl rand -hex 32
 ```
 
-Paste the value into `searxng/settings.yml` under `server.secret_key`. The repo ships a dev key; replace it if you expose the instance beyond localhost.
+Put the value in `.env` under `SEARXNG_SECRET`. Rotate it if you ever expose the instance beyond localhost.
 
 ## Tests
 

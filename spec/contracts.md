@@ -39,7 +39,8 @@ interface SearchProvider { search(query: string, opts?: { count?: number; signal
   union. Response headers: `Cache-Control: no-cache`, `Connection: keep-alive`,
   `X-Accel-Buffering: no`; flush per event.
 - `GET /api/search?q=<q>&format=json` -> single `{ results: RankedResult[]; trace; finalOrderSource }`
-  (no-JS / error fallback; tests assert this).
+  (no-JS / error fallback; tests assert this). Best-effort: failures surface as empty `results`
+  with a 200 and **no `error` field** — intentionally asymmetric with the SSE `error` event.
 - `lens` (optional) selects an `idealResult` preset; accepted but a **no-op until slice 13** (post-MVP).
 
 ## Stream invariant
@@ -110,6 +111,7 @@ const altQueryCap = (maxQueries: number) => Math.max(0, maxQueries - 1)
 
 - `execFile("cursor-agent", ["-p","--output-format","json","--mode","ask","--sandbox","enabled","--model",CURSOR_MODEL, fullPrompt])`
   — arg array, never a shell string; prompt is the trailing positional arg.
+- `--output-format json` makes **stdout a JSON envelope** `{ "type": "result", "result": "<model text>" }` (empirically verified). Parse stdout, take `.result`, and run the ladder on **that string** — never on the raw stdout blob.
 - No `--system` flag: `fullPrompt = system + "\n---\n" + prompt`, JSON-schema block stays **last**.
 - `p-limit(1)`; 45s timeout -> SIGKILL; <=1 retry with a "JSON only" reminder.
 - JSON-extraction ladder on `result`: (1) parse whole; (2) strip ```` ```json ```` fences;

@@ -51,8 +51,8 @@ slice changes one, update this file.
 
 - Routes live under `packages/web/src/routes/` (slice 01 convention), **not** `pages/`
   (the plan said `pages/{Home,Results}.tsx`; reality is `routes/`). Extend `routes/`.
-- `@solidjs/router` is wired but only `/` exists; add `/search`. Vite proxies `/api`
-  only -> `:3001`, so web code uses **relative** `fetch('/api/...')`, never an absolute URL.
+- `@solidjs/router` is wired; `/` (Home) and `/search` (Results, added slice 03) exist. Vite
+  proxies `/api` only -> `:3001`, so web code uses **relative** `fetch('/api/...')`, never an absolute URL.
 
 ## Search provider (built in slice 02)
 
@@ -71,5 +71,20 @@ slice changes one, update this file.
 ## Stub scripts
 
 - `pnpm eval` is a placeholder until slice 06 — ignore for now.
-- `p-limit` / `LRUCache` are installed but stubbed (`void`); wire real usage only when a
-  slice needs them (cache = slice 10).
+- `p-limit` / `LRUCache` are installed but stubbed (`void`) in `index.ts`; wire real usage only
+  when a slice needs them (`p-limit` = AI layer in slice 04, cache = slice 10).
+
+## Known deferred gaps (recorded slice 03, owned by later slices)
+
+These are conscious deferrals, not bugs — don't "discover" them again:
+
+- **Client-abort not wired from the route.** `runSearchOrchestrator` accepts `signal`, but
+  `routes/search.ts` never passes the request's close/abort signal, so a client disconnect
+  doesn't cancel in-flight SearXNG/AI work. Owned by **slice 10**.
+- **No per-event SSE flush.** The route writes frames but never calls `reply.raw.flush()`;
+  fine for local `app.inject` tests, may buffer behind a proxy. Owned by **slice 10**.
+- **`format=json` is asymmetric by design.** On failure it returns `{results:[], ...}` with a
+  200 and **no `error` field** (no-JS fallback), unlike the SSE `error` event. Intentional;
+  documented in `contracts.md`.
+- **`SEARCH_TIMEOUT_MS` not wired.** Provider hardcodes 15s; the env key exists in
+  `contracts.md` + `.env.example` for when a slice makes it configurable.
