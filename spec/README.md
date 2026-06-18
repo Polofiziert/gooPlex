@@ -9,7 +9,8 @@ disagree, **fix the spec first, then the code.**
 | File | Role | Changes |
 | --- | --- | --- |
 | `overview.md` | Vision, philosophy, non-goals, framing, resolved decisions | rarely |
-| `contracts.md` | The authoritative interface: data types, SSE protocol, API, invariants, token budget | deliberately, with a version bump |
+| `contracts.md` | The authoritative interface: data types, SSE protocol, API, invariants, token budget, env, observability | deliberately, with a version bump |
+| `conventions.md` | Durable repo facts (ports, build contract, module rules, server patterns, env gap, testing) | when a slice changes one |
 | `slices/NN-*.md` | Per-slice requirement + acceptance criteria + done-when | per slice |
 
 The full **design rationale** ("why we decided X") lives in the Cursor plan

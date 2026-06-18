@@ -8,7 +8,8 @@ alwaysApply: true
 The `spec/` tree is authoritative. Before writing or changing code, consult:
 
 - `spec/overview.md` — vision, non-goals, single-user/local-first framing, resolved decisions, build order + MVP cut line.
-- `spec/contracts.md` — the interface: data types, SSE protocol, HTTP API, stream invariant, partial-failure contract, token budget, `sourceType` table, AI invocation contract.
+- `spec/contracts.md` — the interface: data types, SSE protocol, HTTP API, stream invariant, partial-failure contract, token budget, env vars, observability, `sourceType` table, AI invocation contract.
+- `spec/conventions.md` — durable repo facts (ports, monorepo/build contract, NodeNext `.js` imports, `buildServer()`/`app.inject`, env-loading gap, testing). Read before touching code.
 - `spec/slices/NN-*.md` — the slice you are working on: requirement + acceptance criteria + done-when.
 
 ## Rules
