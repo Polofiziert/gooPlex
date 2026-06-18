@@ -1,0 +1,17 @@
+{
+  "name": "gooplex",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @gooplex/shared build && concurrently -n server,web \"pnpm --filter @gooplex/server dev\" \"pnpm --filter @gooplex/web dev\"",
+    "test": "pnpm -r test",
+    "eval": "echo \"Eval harness ships in slice 06\" && exit 0",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@10.12.1"
+}

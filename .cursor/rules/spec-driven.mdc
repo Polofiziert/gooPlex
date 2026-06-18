@@ -1,0 +1,35 @@
+---
+description: gooPlex is spec-driven; the spec/ tree and @gooplex/shared are the source of truth
+alwaysApply: true
+---
+
+# Spec-Driven Development (gooPlex)
+
+The `spec/` tree is authoritative. Before writing or changing code, consult:
+
+- `spec/overview.md` — vision, non-goals, single-user/local-first framing, resolved decisions, build order + MVP cut line.
+- `spec/contracts.md` — the interface: data types, SSE protocol, HTTP API, stream invariant, partial-failure contract, token budget, `sourceType` table, AI invocation contract.
+- `spec/slices/NN-*.md` — the slice you are working on: requirement + acceptance criteria + done-when.
+
+## Rules
+
+- **Spec first.** If implementation reveals the spec is wrong, STOP and update the
+  relevant spec file (and `CONTRACT_VERSION`/`PROMPT_VERSION` if the interface or
+  prompts change), THEN write code. Never let code silently diverge from the spec.
+- **Work one slice at a time, in build order.** Don't start a slice whose `Depends on`
+  is unmet. Respect the MVP cut line (through `08-config-files`).
+- **Acceptance criteria are the definition of done.** A slice is complete only when
+  every checkbox is backed by a test, a command, or the eval gate — not "seems to work".
+- **Prefer machine-checkable spec.** Encode contracts as `@gooplex/shared` types + zod
+  schemas + eval thresholds rather than prose wherever possible; both packages import
+  shared types from `@gooplex/shared` (never hand-duplicate the `SseEvent` union).
+- **The `06-eval` gate is a real go/no-go.** Do not build past it if AI ranking fails
+  to beat the RRF baseline per the slice's decision rule; escalate instead.
+- **Honor the non-goals.** Rank, never answer. Link out only. Snippets only (no page
+  fetching). No ads/answer-box/infinite-scroll.
+
+## Workflow
+
+Author/refine specs in Plan mode; run one critical subagent review on a new slice
+spec before coding; implement in Agent mode; verify with `pnpm test` (+ `pnpm eval`
+for ranking); then update the slice `Status` and reconcile the spec.
