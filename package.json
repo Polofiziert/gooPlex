@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @gooplex/shared build && concurrently -n server,web \"pnpm --filter @gooplex/server dev\" \"pnpm --filter @gooplex/web dev\"",
+    "dev": "pnpm --filter @gooplex/shared build && concurrently -n searxng,server,web \"docker compose up searxng\" \"pnpm --filter @gooplex/server dev\" \"pnpm --filter @gooplex/web dev\"",
     "test": "pnpm -r test",
     "eval": "echo \"Eval harness ships in slice 06\" && exit 0",
     "build": "pnpm -r build",
