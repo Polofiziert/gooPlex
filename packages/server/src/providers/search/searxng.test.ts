@@ -36,7 +36,7 @@ describe.runIf(live)("SearxngProvider live", () => {
       expect(["docs", "academic", "forum", "news", "other"]).toContain(
         row.sourceType,
       );
-      expect(row.rrfRank).toBeGreaterThan(0);
+      expect(row.rrfScore).toBeGreaterThan(0);
     }
   });
 });

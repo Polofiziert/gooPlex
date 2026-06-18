@@ -24,7 +24,7 @@ interface Accumulator {
 
 /**
  * Dedupe by normalized URL and merge multi-query lists via RRF (Σ 1/(60+rank)).
- * Returns results sorted by descending rrfRank (the fusion score).
+ * Returns results sorted by descending rrfScore (the fusion score).
  */
 export function mergeResults(queryLists: MergeInput[][]): RawResult[] {
   const byKey = new Map<string, Accumulator>();
@@ -56,21 +56,21 @@ export function mergeResults(queryLists: MergeInput[][]): RawResult[] {
       snippet: item.snippet,
       engine: item.engine,
       sourceType: item.sourceType,
-      rrfRank: score,
+      rrfScore: score,
     }),
   );
 
-  merged.sort((a, b) => b.rrfRank - a.rrfRank || a.url.localeCompare(b.url));
+  merged.sort((a, b) => b.rrfScore - a.rrfScore || a.url.localeCompare(b.url));
   return merged;
 }
 
 /** Assign positional RRF scores for a single-query result list. */
 export function assignSingleQueryRrf(
-  items: Omit<RawResult, "rrfRank">[],
+  items: Omit<RawResult, "rrfScore">[],
 ): RawResult[] {
   return items.map((item, index) => ({
     ...item,
-    rrfRank: rrfScoreForRank(index + 1),
+    rrfScore: rrfScoreForRank(index + 1),
   }));
 }
 

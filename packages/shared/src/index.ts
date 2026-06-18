@@ -9,7 +9,7 @@ export interface RawResult {
   snippet: string;
   engine: string;
   sourceType: SourceType;
-  rrfRank: number;
+  rrfScore: number;
 }
 
 export interface RankedResult extends RawResult {

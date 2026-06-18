@@ -1,10 +1,12 @@
 import "./env.js";
 import { fileURLToPath } from "node:url";
-import type { SseEvent } from "@gooplex/shared";
+import type { SearchProvider, SseEvent } from "@gooplex/shared";
 import Fastify from "fastify";
 import { LRUCache } from "lru-cache";
 import pLimit from "p-limit";
 import { z } from "zod";
+import { createSearchProvider } from "./providers/search/index.js";
+import { registerSearchRoute } from "./routes/search.js";
 
 const portSchema = z.coerce.number().int().positive().default(3001);
 
@@ -19,10 +21,16 @@ const cache = new LRUCache<string, string>({ max: 100, ttl: 60_000 });
 void limit;
 void cache;
 
-export async function buildServer() {
+export interface BuildServerOptions {
+  searchProvider?: SearchProvider;
+}
+
+export async function buildServer(opts: BuildServerOptions = {}) {
   const app = Fastify({ logger: true });
 
   app.get("/health", async () => ({ status: "ok" }));
+
+  registerSearchRoute(app, opts.searchProvider ?? createSearchProvider());
 
   return app;
 }

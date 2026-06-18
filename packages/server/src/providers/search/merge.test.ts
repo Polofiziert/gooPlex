@@ -69,10 +69,10 @@ describe("mergeResults RRF", () => {
       "https://gamma.example/",
     ]);
 
-    expect(merged[0]?.rrfRank).toBeCloseTo(betaScore, 10);
-    expect(merged[1]?.rrfRank).toBeCloseTo(alphaScore, 10);
-    expect(merged[2]?.rrfRank).toBeCloseTo(deltaScore, 10);
-    expect(merged[3]?.rrfRank).toBeCloseTo(gammaScore, 10);
+    expect(merged[0]?.rrfScore).toBeCloseTo(betaScore, 10);
+    expect(merged[1]?.rrfScore).toBeCloseTo(alphaScore, 10);
+    expect(merged[2]?.rrfScore).toBeCloseTo(deltaScore, 10);
+    expect(merged[3]?.rrfScore).toBeCloseTo(gammaScore, 10);
 
     // Deduped: beta keeps rank-1 metadata from query B
     expect(merged[0]?.engine).toBe("duckduckgo");
@@ -98,7 +98,7 @@ describe("mergeResults RRF", () => {
     ];
 
     const ranked = assignSingleQueryRrf(items);
-    expect(ranked[0]?.rrfRank).toBeCloseTo(rrfScoreForRank(1), 10);
-    expect(ranked[1]?.rrfRank).toBeCloseTo(rrfScoreForRank(2), 10);
+    expect(ranked[0]?.rrfScore).toBeCloseTo(rrfScoreForRank(1), 10);
+    expect(ranked[1]?.rrfScore).toBeCloseTo(rrfScoreForRank(2), 10);
   });
 });
