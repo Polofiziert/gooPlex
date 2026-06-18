@@ -1,3 +1,4 @@
+import "./env.js";
 import { fileURLToPath } from "node:url";
 import type { SseEvent } from "@gooplex/shared";
 import Fastify from "fastify";

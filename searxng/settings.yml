@@ -1,0 +1,10 @@
+use_default_settings: true
+
+server:
+  secret_key: "e820020a4168eba47b07004981525def1b975e87cda1233da81664abab42be2a"
+  limiter: false
+
+search:
+  formats:
+    - html
+    - json
