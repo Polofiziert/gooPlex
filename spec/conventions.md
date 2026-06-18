@@ -8,8 +8,7 @@ slice changes one, update this file.
 - Server `PORT` defaults to **3001** (zod `z.coerce.number().default(3001)` in `packages/server/src/index.ts`).
 - Web dev server (Vite) **proxies only `/api`** -> `http://localhost:${PORT}` (default 3001), `changeOrigin: true`.
 - `/health` is served directly on `:3001` (not proxied). SearXNG is direct on `:8080` (added in slice 02).
-- Root `pnpm dev`: `pnpm --filter @gooplex/shared build && concurrently -n server,web "...server dev" "...web dev"`.
-  Slice 02 adds a third leg: `docker compose up searxng` (service name `searxng`).
+- Root `pnpm dev`: `pnpm --filter @gooplex/shared build && concurrently -n searxng,server,web "docker compose up searxng" "...server dev" "...web dev"`.
 
 ## Monorepo / build contract
 
@@ -37,10 +36,9 @@ slice changes one, update this file.
 - Fastify is created with `logger: true` — tests print JSON request logs to stdout (harmless, noisy).
 - `p-limit(1)`, `LRUCache`, and `zod` are installed and currently stubbed; wire real usage when a slice needs it.
 
-## Env loading (gap to close in slice 02)
+## Env loading
 
-- There is **no `dotenv`** yet: `process.env.SEARXNG_URL` etc. are NOT loaded from `.env`
-  automatically. Until a slice adds `dotenv` (or `--env-file`), vars must be exported manually.
+- Server loads `.env` from the repo root via `dotenv` in `packages/server/src/env.ts` (imported first from `index.ts`).
 - `.env.example` is the canonical key list (mirrors `contracts.md` Environment section).
 
 ## Testing
@@ -49,6 +47,29 @@ slice changes one, update this file.
 - Server/shared tests run in Node; web tests in jsdom. Use Vitest `test.projects` for any
   per-file env split (NOT `environmentMatchGlobs`, removed in Vitest 4).
 
+## Web structure
+
+- Routes live under `packages/web/src/routes/` (slice 01 convention), **not** `pages/`
+  (the plan said `pages/{Home,Results}.tsx`; reality is `routes/`). Extend `routes/`.
+- `@solidjs/router` is wired but only `/` exists; add `/search`. Vite proxies `/api`
+  only -> `:3001`, so web code uses **relative** `fetch('/api/...')`, never an absolute URL.
+
+## Search provider (built in slice 02)
+
+- Use `createSearchProvider()` (`providers/search/index.ts`), selected by `SEARCH_PROVIDER`;
+  don't instantiate `SearxngProvider` ad hoc.
+- `SearxngProvider.search(q)` is **single-query** and returns normalized `RawResult[]`.
+  `mergeResults()` (RRF) exists for the multi-query orchestrator (slice 07+); single-query
+  slices don't need it.
+- `RESULTS_PER_QUERY` is enforced **client-side** (`.slice(0, count)`); no count param is
+  sent to SearXNG (it may return more, e.g. 24 raw).
+- Search timeout is currently **hardcoded 15s** in the provider (not yet reading
+  `SEARCH_TIMEOUT_MS`); a later slice can make it env-configurable.
+- `rrfScore` holds the RRF fusion score (`1/(60+rank)` per query), NOT an ordinal 1,2,3.
+- Live tests use the `describe.runIf(searxngAvailable)` pattern in `searxng.test.ts`.
+
 ## Stub scripts
 
 - `pnpm eval` is a placeholder until slice 06 — ignore for now.
+- `p-limit` / `LRUCache` are installed but stubbed (`void`); wire real usage only when a
+  slice needs them (cache = slice 10).

@@ -9,8 +9,8 @@ The prompt/JSON contracts are mirrored by zod schemas in `pipeline/prompts.ts`.
 ```ts
 type SourceType = "docs" | "academic" | "forum" | "news" | "other";
 
-interface RawResult { url: string; title: string; snippet: string; engine: string; sourceType: SourceType; rrfRank: number }
-interface RankedResult extends RawResult { score: number; rank: number; reason: string } // reason = "why ranked #N"
+interface RawResult { url: string; title: string; snippet: string; engine: string; sourceType: SourceType; rrfScore: number } // rrfScore = RRF fusion score (higher = better); baseline order = rrfScore desc
+interface RankedResult extends RawResult { score: number; rank: number; reason: string } // rank = 1-based ordinal in the FINAL display order; score = AI 0-100; reason = "why ranked #N"
 interface SearchIntent { summary: string; assumptions: string[] }
 interface IdealResult { description: string; signals: string[] }
 interface ReasoningTrace {
@@ -20,7 +20,7 @@ interface ReasoningTrace {
 type SseEvent =
   | { event: "understanding"; data: { searchIntent: SearchIntent; idealResult: IdealResult } }
   | { event: "expanding";     data: { queries: string[] } }
-  | { event: "searching";     data: { results: RawResult[] } }   // may fire >1x; always the full accumulated merged set with recomputed rrfRank
+  | { event: "searching";     data: { results: RawResult[] } }   // may fire >1x; always the full accumulated merged set with recomputed rrfScore
   | { event: "ranking";       data: { rationale: { url: string; reason: string }[] } }
   | { event: "done";          data: { results: RankedResult[]; trace: ReasoningTrace; finalOrderSource: "ai" | "rrf-fallback" } }
   | { event: "error";         data: { stage: "reasoning" | "searching" | "ranking"; message: string } };
@@ -73,8 +73,9 @@ const altQueryCap = (maxQueries: number) => Math.max(0, maxQueries - 1)
 
 `PORT`, `AI_PROVIDER=cursor-cli|ollama`, `CURSOR_MODEL=sonnet-4`, `OLLAMA_URL`,
 `OLLAMA_MODEL`, `SEARCH_PROVIDER=searxng`, `SEARXNG_URL=http://localhost:8080`,
+`SEARXNG_SECRET` (SearXNG instance secret, env-substituted from slice 03 on),
 `MAX_QUERIES=4`, `RANK_CANDIDATE_CAP=24`, `AI_TIMEOUT_MS=45000`,
-`CACHE_TTL_MS=600000`, `DEBUG_AI=0`.
+`SEARCH_TIMEOUT_MS=15000`, `CACHE_TTL_MS=600000`, `DEBUG_AI=0`.
 
 ## Observability (JSONL, append-only, `logs/ai-trace-YYYY-MM-DD.jsonl`, gitignored)
 
@@ -86,9 +87,13 @@ const altQueryCap = (maxQueries: number) => Math.max(0, maxQueries - 1)
 ## Merge & normalization
 
 - Dedupe by normalized URL (strip protocol/`www`/trailing slash/tracking params).
-- **RRF** merge across queries: `rrfScore = Σ 1/(60 + rank_i)` defines the `rrfRank` order.
-  SearXNG's per-engine/per-query score (intentionally NOT stored on `RawResult`) is not
-  cross-comparable; never sort by it.
+- **RRF** merge across queries: `rrfScore = Σ 1/(60 + rank_i)` (higher = better); the
+  baseline/fallback order is `rrfScore` **descending**. `rrfScore` is a *score*, not an
+  ordinal — the displayed `RankedResult.rank` (1-based) is derived by sorting, never by
+  copying `rrfScore`. SearXNG's per-engine/per-query score (intentionally NOT stored on
+  `RawResult`) is not cross-comparable; never sort by it.
+- `sourceType` heuristics are intentionally **coarse** (first-match-wins host/path rules;
+  precision is not a goal) — e.g. any `/api` path or `python.org` host maps to `docs`.
 - `sourceType` via first-match-wins table (lowercased host+path, after normalization; default `other`):
   1. `.edu` / `.ac.<cc>` -> academic
   2. arxiv/biorxiv/ssrn/pubmed/ncbi -> academic
